@@ -24,3 +24,9 @@ uvx pre-commit install
 ```
 
 5. How to add new deps: Always use `uv add` to add new dependencies. Do not use any direct `pip install`. Let uv do the dependency management for us!
+
+6. Ingest the Knowledge Base
+Run the ingestion script as a module so that all relative imports work correctly:
+```bash
+uv run python -m rag.ingest
+```
