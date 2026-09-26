@@ -41,6 +41,9 @@ medbot/
 │   ├── tools.py                         # Retriever and booking tools
 │   └── agui.py                          # AGUI protocol event models & streaming
 │
+├── third_party/                         # Mock external APIs for tools
+│   └── main.py                          # MedCenter Booking API
+│
 ├── rag/                                 # Knowledge base & retrieval indexing
 │   ├── docs/                            # Source documents (markdown files)
 │   ├── ingest.py                        # Document chunking & embedding script
@@ -59,3 +62,5 @@ medbot/
 - **Dependencies**: The project uses `uv` for dependency management. All dependency additions must be done via `uv add <package>` instead of standard pip.
 - **Pre-commit**: Ruff is used for linting and formatting via pre-commit hooks.
 - **Docker**: This is a toy project meant to be run directly on the host using the `uv` virtual environment. Docker is **not** required.
+- **Design Principles**: Use the "Do Not Repeat Yourself" (DRY) principle throughout the codebase.
+- **Code Style**: Keep all imports at the top of the file.
