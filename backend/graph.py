@@ -6,7 +6,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import interrupt
 from typing import Optional
 
-from backend.tools import book_appointment
+from backend.tools import book_appointment, retrieve_medical_guidelines
 
 
 class AgentState(MessagesState):
@@ -14,11 +14,11 @@ class AgentState(MessagesState):
     center_name: Optional[str]
 
 
-tools = [book_appointment]
+tools = [book_appointment, retrieve_medical_guidelines]
 
-# Using gemini-3.8-flash as the standard model for quick, capable tool calling
+# Using gemini-3.7-flash as the standard model for fast, reliable tool calling
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.8-flash", temperature=0, streaming=True
+    model="gemini-3.7-flash", temperature=0, streaming=True, max_retries=2
 ).bind_tools(tools)
 
 # The pre-built tool node will execute the tools

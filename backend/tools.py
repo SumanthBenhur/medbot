@@ -1,7 +1,8 @@
+from typing import Annotated
 import httpx
 from langchain_core.tools import tool
 from langgraph.prebuilt import InjectedState
-from typing import Annotated
+from rag.vector_store import get_retriever
 
 
 @tool(return_direct=True)
@@ -43,4 +44,28 @@ def book_appointment(booking_time: str, state: Annotated[dict, InjectedState]) -
         return f"An error occurred while attempting to book the appointment: {str(e)}"
 
 
-# We can add the retriever tool here later
+@tool
+def retrieve_medical_guidelines(query: str) -> str:
+    """
+    Scans and retrieves information across all clinical diagnostic knowledge documents, including:
+    1. Test preparation protocols (fasting rules, diet, medication guidelines).
+    2. Clinical contraindications and safety precautions (implants, allergies, pregnancy).
+    3. Insurance coverage, pre-authorization, and cost policies.
+    4. Test durations, check-in instructions, and appointment requirements.
+    5. Diagnostic test FAQs and general procedure details.
+
+    Args:
+        query: Specific medical query or test topic to retrieve information for.
+    """
+    retriever = get_retriever(k=1)
+    docs = retriever.invoke(query)
+
+    if not docs:
+        return "No relevant medical guidelines or protocol documents found."
+
+    results = []
+    for doc in docs:
+        source = doc.metadata.get("source", "Unknown Document")
+        results.append(f"Source ({source}):\n{doc.page_content}")
+
+    return "\n\n---\n\n".join(results)
