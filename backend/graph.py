@@ -1,12 +1,16 @@
-from langgraph.graph import StateGraph, START, END, MessagesState
-from langgraph.prebuilt import ToolNode
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain_core.messages import ToolMessage
-from langgraph.checkpoint.memory import MemorySaver
-from langgraph.types import interrupt
+from datetime import datetime
 from typing import Optional
+from dotenv import load_dotenv
+from langchain_core.messages import SystemMessage, ToolMessage
+from langchain_google_genai import ChatGoogleGenerativeAI
+from langgraph.checkpoint.memory import MemorySaver
+from langgraph.graph import END, START, MessagesState, StateGraph
+from langgraph.prebuilt import ToolNode
+from langgraph.types import interrupt
 
 from backend.tools import book_appointment, retrieve_medical_guidelines
+
+load_dotenv()
 
 
 class AgentState(MessagesState):
@@ -16,20 +20,29 @@ class AgentState(MessagesState):
 
 tools = [book_appointment, retrieve_medical_guidelines]
 
-# Using gemini-3.7-flash as the standard model for fast, reliable tool calling
+# Using gemini-3.5-flash-lite for fast, responsive tool calling without quota bottlenecks
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.7-flash", temperature=0, streaming=True, max_retries=2
+    model="gemini-3.5-flash-lite", streaming=True, max_retries=2
 ).bind_tools(tools)
 
 # The pre-built tool node will execute the tools
 tool_node = ToolNode(tools)
 
+SYSTEM_PROMPT = """You are Medbot, an intelligent medical assistant.
+You answer patient questions about test preparation guidelines and schedule specialized diagnostic tests.
+When scheduling an appointment:
+- Bookings are handled by an external API tool 'book_appointment'.
+- When the patient asks to book an appointment, call the 'book_appointment' tool with 'booking_time' formatted as 'YYYY-MM-DD HH:MM'.
+- Today's date is {today}. If the user mentions relative days like 'tomorrow', calculate the exact date accordingly.
+"""
+
 
 async def assistant_node(state: AgentState):
     """The main LLM node."""
-    # We pass the messages to the model
-    # We could also inject a system prompt here if needed
-    response = await llm.ainvoke(state["messages"])
+    today = datetime.now().strftime("%Y-%m-%d")
+    sys_msg = SystemMessage(content=SYSTEM_PROMPT.format(today=today))
+    messages = [sys_msg] + list(state["messages"])
+    response = await llm.ainvoke(messages)
     return {"messages": [response]}
 
 

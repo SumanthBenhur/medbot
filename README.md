@@ -31,21 +31,34 @@ Run the ingestion script as a module so that all relative imports work correctly
 uv run python -m rag.ingest
 ```
 
-## Testing the Application
+## Running the Full Application
 
-To test the end-to-end backend flow (including the LangGraph interruption for the human-in-the-loop diagnostic center selection), you must run both servers and the `test.py` script.
+To run the complete system (Mock Booking API, FastAPI backend, and Streamlit frontend):
 
-1. Ensure your `.env` file is set up with `GOOGLE_API_KEY`.
-2. Start the Mock Third-Party Booking API (in a new terminal):
+1. **Ensure your `.env` file is configured** with your `GOOGLE_API_KEY`.
+2. **Ingest the Knowledge Base** (one-time setup):
+   ```bash
+   uv run python -m rag.ingest
+   ```
+3. **Start the Mock Third-Party Booking API** (Terminal 1):
    ```bash
    uv run uvicorn third_party.main:app --reload --port 8001
    ```
-3. Start the LangGraph Backend Server (in a new terminal):
+4. **Start the LangGraph FastAPI Backend** (Terminal 2):
    ```bash
    uv run uvicorn backend.main:app --reload --port 8000
    ```
-4. Run the test script (in a new terminal):
+5. **Start the Streamlit Frontend UI** (Terminal 3):
    ```bash
-   uv run python test.py
+   uv run streamlit run frontend/app.py
    ```
-   You will see the Server-Sent Events stream to the console, demonstrating the agent pausing for human input and then resuming.
+
+Open your browser to `http://localhost:8501` to interact with Medbot.
+
+## Testing via CLI
+
+You can also run the automated end-to-end CLI test script:
+```bash
+uv run python test.py
+```
+This tests the full Server-Sent Events (SSE) streaming flow, LangGraph interruption, and graph resumption with center selection.

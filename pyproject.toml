@@ -15,6 +15,8 @@ dependencies = [
     "langchain-google-genai>=4.4.0",
     "langgraph>=1.2.12",
     "pydantic>=2.13.5",
+    "python-dotenv>=1.2.3",
     "sse-starlette>=3.4.11",
+    "streamlit>=1.64.0",
     "uvicorn>=0.54.0",
 ]

@@ -1,12 +1,21 @@
+from typing import Optional
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel
-from typing import Optional
 from langchain_core.messages import HumanMessage
 from langgraph.types import Command
+from pydantic import BaseModel
 
+from backend.agui import (
+    ChatTokenEvent,
+    ThoughtEvent,
+    ToolCallEvent,
+    ToolResultEvent,
+    format_sse,
+)
 from backend.graph import graph
-from backend.agui import format_sse, ChatTokenEvent, ToolCallEvent, ToolResultEvent
+
+load_dotenv()
 
 app = FastAPI(title="Medbot LangGraph Backend")
 
@@ -47,17 +56,43 @@ async def chat_endpoint(req: ChatRequest):
                 if kind == "on_chat_model_stream":
                     chunk = event["data"]["chunk"]
 
-                    # If the model emits thought/reasoning tokens, they'd be handled here.
-                    # For standard text:
-                    content = chunk.content
-                    if isinstance(content, list):
-                        content = "".join(
-                            c.get("text", "")
-                            for c in content
-                            if isinstance(c, dict) and "text" in c
+                    # Check for thought/reasoning in chunk
+                    thought = None
+                    if (
+                        hasattr(chunk, "additional_kwargs")
+                        and "thought" in chunk.additional_kwargs
+                    ):
+                        thought = chunk.additional_kwargs["thought"]
+                    elif (
+                        hasattr(chunk, "response_metadata")
+                        and "thought" in chunk.response_metadata
+                    ):
+                        thought = chunk.response_metadata["thought"]
+
+                    if thought:
+                        yield format_sse(
+                            "thought", ThoughtEvent(thought=str(thought)).model_dump()
                         )
 
-                    if content:
+                    content = chunk.content
+                    if isinstance(content, list):
+                        for c in content:
+                            if isinstance(c, dict):
+                                if c.get("type") == "thought" or "thought" in c:
+                                    t_text = c.get("thought") or c.get("text", "")
+                                    if t_text:
+                                        yield format_sse(
+                                            "thought",
+                                            ThoughtEvent(
+                                                thought=str(t_text)
+                                            ).model_dump(),
+                                        )
+                                elif "text" in c and c["text"]:
+                                    yield format_sse(
+                                        "text",
+                                        ChatTokenEvent(text=c["text"]).model_dump(),
+                                    )
+                    elif isinstance(content, str) and content:
                         yield format_sse(
                             "text", ChatTokenEvent(text=content).model_dump()
                         )
