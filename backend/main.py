@@ -99,26 +99,25 @@ async def chat_endpoint(req: ChatRequest):
 
                 # Handle tool calls starting
                 elif kind == "on_tool_start":
-                    # Filter out tools that aren't ours (LangChain sometimes emits internal events)
-                    if event["name"] in ["book_appointment"]:
-                        inputs = event["data"].get("input", {})
-                        yield format_sse(
-                            "tool_call",
-                            ToolCallEvent(
-                                name=event["name"], input_args=inputs
-                            ).model_dump(),
-                        )
+                    # Emit all tool calls
+                    inputs = event["data"].get("input", {})
+                    yield format_sse(
+                        "tool_call",
+                        ToolCallEvent(
+                            name=event["name"], input_args=inputs
+                        ).model_dump(),
+                    )
 
                 # Handle tool calls finishing
                 elif kind == "on_tool_end":
-                    if event["name"] in ["book_appointment"]:
-                        result = event["data"].get("output", "")
-                        yield format_sse(
-                            "tool_result",
-                            ToolResultEvent(
-                                name=event["name"], result=str(result)
-                            ).model_dump(),
-                        )
+                    # Emit all tool results
+                    result = event["data"].get("output", "")
+                    yield format_sse(
+                        "tool_result",
+                        ToolResultEvent(
+                            name=event["name"], result=str(result)
+                        ).model_dump(),
+                    )
 
             # After the stream finishes, check if the graph paused due to an interrupt()
             state = graph.get_state(config)

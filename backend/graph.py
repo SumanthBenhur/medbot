@@ -22,7 +22,7 @@ tools = [book_appointment, retrieve_medical_guidelines]
 
 # Using gemini-3.5-flash-lite for fast, responsive tool calling without quota bottlenecks
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash-lite", streaming=True, max_retries=2
+    model="gemini-3.5-flash-lite", streaming=True, max_retries=2, thinking_level="high"
 ).bind_tools(tools)
 
 # The pre-built tool node will execute the tools
