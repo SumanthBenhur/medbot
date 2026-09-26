@@ -30,3 +30,22 @@ Run the ingestion script as a module so that all relative imports work correctly
 ```bash
 uv run python -m rag.ingest
 ```
+
+## Testing the Application
+
+To test the end-to-end backend flow (including the LangGraph interruption for the human-in-the-loop diagnostic center selection), you must run both servers and the `test.py` script.
+
+1. Ensure your `.env` file is set up with `GOOGLE_API_KEY`.
+2. Start the Mock Third-Party Booking API (in a new terminal):
+   ```bash
+   uv run uvicorn third_party.main:app --reload --port 8001
+   ```
+3. Start the LangGraph Backend Server (in a new terminal):
+   ```bash
+   uv run uvicorn backend.main:app --reload --port 8000
+   ```
+4. Run the test script (in a new terminal):
+   ```bash
+   uv run python test.py
+   ```
+   You will see the Server-Sent Events stream to the console, demonstrating the agent pausing for human input and then resuming.
