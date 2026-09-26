@@ -18,42 +18,79 @@ uv sync
 source .venv/bin/activate
 ```
 
-4. Install pre-commit hooks
+4. Configure Environment Variables
+Create your local `.env` file from `.env.example`:
+```bash
+cp .env.example .env
+```
+Open `.env` and set your `GOOGLE_API_KEY` (you can generate an API key at [Google AI Studio](https://aistudio.google.com/)):
+```env
+GOOGLE_API_KEY=your_google_api_key_here
+```
+> **Note**: `GOOGLE_API_KEY` is required by the FastAPI backend and LangGraph agent to generate reasoning tokens, answer test preparation questions, and execute tool calls.
+
+5. Install pre-commit hooks
 ```bash
 uvx pre-commit install
 ```
 
-5. How to add new deps: Always use `uv add` to add new dependencies. Do not use any direct `pip install`. Let uv do the dependency management for us!
+6. How to add new deps: Always use `uv add` to add new dependencies. Do not use any direct `pip install`. Let uv do the dependency management for us!
 
-6. Ingest the Knowledge Base
+7. Ingest the Knowledge Base
 Run the ingestion script as a module so that all relative imports work correctly:
 ```bash
 uv run python -m rag.ingest
 ```
 
-## Running the Full Application
+## Running the Application
 
-To run the complete system (Mock Booking API, FastAPI backend, and Streamlit frontend):
+Ensure your `.env` file is configured with your `GOOGLE_API_KEY` and the knowledge base has been ingested.
 
-1. **Ensure your `.env` file is configured** with your `GOOGLE_API_KEY`.
-2. **Ingest the Knowledge Base** (one-time setup):
-   ```bash
-   uv run python -m rag.ingest
-   ```
-3. **Start the Mock Third-Party Booking API** (Terminal 1):
+---
+
+### Option 1: Run Everything Together (Recommended)
+
+You can start all three services (Mock Booking API, FastAPI Backend, and Streamlit Frontend) simultaneously using the provided startup script:
+
+```bash
+./run.sh
+```
+*(or `bash run.sh`)*
+
+Pressing `Ctrl+C` will cleanly terminate all running background processes.
+
+---
+
+### Option 2: Run Services Individually (Separate Terminals)
+
+If you prefer running services in separate terminal windows/tabs for independent logging and debugging:
+
+1. **Terminal 1: Mock Third-Party Booking API** (Port 8001)
    ```bash
    uv run uvicorn third_party.main:app --reload --port 8001
    ```
-4. **Start the LangGraph FastAPI Backend** (Terminal 2):
+
+2. **Terminal 2: LangGraph FastAPI Backend** (Port 8000)
    ```bash
    uv run uvicorn backend.main:app --reload --port 8000
    ```
-5. **Start the Streamlit Frontend UI** (Terminal 3):
+
+3. **Terminal 3: Streamlit Frontend UI** (Port 8501)
    ```bash
    uv run streamlit run frontend/app.py
    ```
 
-Open your browser to `http://localhost:8501` to interact with Medbot.
+---
+
+## Service Endpoints & URLs
+
+| Service | Port | URL | Description |
+| :--- | :--- | :--- | :--- |
+| **Streamlit UI** | `8501` | [http://localhost:8501](http://localhost:8501) | Main chat user interface |
+| **FastAPI Backend** | `8000` | [http://localhost:8000](http://localhost:8000) | LangGraph agent & SSE `/chat` endpoint ([API Docs](http://localhost:8000/docs)) |
+| **Mock Booking API** | `8001` | [http://localhost:8001](http://localhost:8001) | External scheduling service ([API Docs](http://localhost:8001/docs)) |
+
+---
 
 ## Testing via CLI
 
